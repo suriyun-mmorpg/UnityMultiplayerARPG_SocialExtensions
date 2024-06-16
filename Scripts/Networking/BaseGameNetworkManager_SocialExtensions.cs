@@ -1,5 +1,5 @@
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
-using LiteNetLib;
 using LiteNetLibManager;
 using UnityEngine;
 
@@ -8,15 +8,19 @@ namespace MultiplayerARPG
     public partial class BaseGameNetworkManager
     {
         [Header("Social extensions")]
-        public ushort getOnlineCharacterDataRequestType = 1500;
+        [SerializeField]
+        protected ushort getOnlineCharacterDataRequestType = 1500;
+        [SerializeField]
+        protected ushort getOnlineCharactersRequestType = 1501;
 
         [DevExtMethods("RegisterMessages")]
-        public void RegisterClientMessages_SocialExtensions()
+        public virtual void RegisterClientMessages_SocialExtensions()
         {
             RegisterRequestToServer<RequestGetOnlineCharacterDataMessage, ResponseGetOnlineCharacterDataMessage>(getOnlineCharacterDataRequestType, HandleRequestGetOnlineCharacterData);
+            RegisterRequestToServer<EmptyMessage, ResponseSocialCharacterListMessage>(getOnlineCharactersRequestType, HandleRequestGetOnlineCharacters);
         }
 
-        public UniTaskVoid HandleRequestGetOnlineCharacterData(RequestHandlerData requestHandler, RequestGetOnlineCharacterDataMessage request, RequestProceedResultDelegate<ResponseGetOnlineCharacterDataMessage> result)
+        public virtual UniTaskVoid HandleRequestGetOnlineCharacterData(RequestHandlerData requestHandler, RequestGetOnlineCharacterDataMessage request, RequestProceedResultDelegate<ResponseGetOnlineCharacterDataMessage> result)
         {
             if (!GameInstance.ServerUserHandlers.TryGetPlayerCharacterById(request.characterId, out IPlayerCharacterData playerCharacter))
             {
@@ -37,6 +41,25 @@ namespace MultiplayerARPG
         public bool RequestGetOnlineCharacterData(RequestGetOnlineCharacterDataMessage data, ResponseDelegate<ResponseGetOnlineCharacterDataMessage> callback)
         {
             return ClientSendRequest(getOnlineCharacterDataRequestType, data, responseDelegate: callback);
+        }
+
+        public virtual UniTaskVoid HandleRequestGetOnlineCharacters(RequestHandlerData requestHandler, EmptyMessage request, RequestProceedResultDelegate<ResponseSocialCharacterListMessage> result)
+        {
+            List<SocialCharacterData> onlineCharacters = new List<SocialCharacterData>();
+            foreach (IPlayerCharacterData playerCharacterData in GameInstance.ServerUserHandlers.GetPlayerCharacters())
+            {
+                onlineCharacters.Add(SocialCharacterData.Create(playerCharacterData));
+            }
+            result.InvokeSuccess(new ResponseSocialCharacterListMessage()
+            {
+                characters = onlineCharacters,
+            });
+            return default;
+        }
+
+        public bool RequestGetOnlineCharacters(ResponseDelegate<ResponseSocialCharacterListMessage> callback)
+        {
+            return ClientSendRequest(getOnlineCharactersRequestType, EmptyMessage.Value, responseDelegate: callback);
         }
     }
 }
