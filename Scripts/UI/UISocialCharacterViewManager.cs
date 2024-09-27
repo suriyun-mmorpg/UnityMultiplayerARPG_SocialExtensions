@@ -44,7 +44,7 @@ namespace MultiplayerARPG
                 if (characterModel != null)
                 {
                     characterModel.SetupModelBodyParts(response.character);
-                    characterModel.SetEquipItemsImmediately(response.character.EquipItems, response.character.SelectableWeaponSets, response.character.EquipWeaponSet, false);
+                    characterModel.SetEquipItemsImmediately(response.character.EquipItems, response.character.SelectableWeaponSets, response.character.EquipWeaponSet, true);
                     characterModel.gameObject.SetActive(true);
                     _characterModels.Add(characterModel);
                 }
