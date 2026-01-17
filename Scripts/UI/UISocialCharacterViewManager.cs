@@ -55,7 +55,7 @@ namespace MultiplayerARPG
         {
             if (index < 0 || index >= entries.Length)
                 return;
-            entries[index].container.RemoveChildren();
+            entries[index].container.DestroyChildren();
         }
     }
 }
